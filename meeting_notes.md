@@ -1,3 +1,18 @@
+# Meeting 4: Slide Revisions & Presentation Rehearsal
+**Date:** September 10, 2026
+
+**Primary Objective:** Finalize slide visuals and practice timed runs for presentation.
+
+## Key Discussions:
+* Reviewed the final 7-slide deck layout to ensure the rule of no more than 5 bullet points per slide.
+* Removed cybersecurity graphic on Slide 6 to ensure images remain focused on system features and architecture.
+* Ensured the pitch maintained a focus on resolving workplace computer misuse, intentionally excluding moralizing or ethical statements.
+* Rehearsed slide transitions and pacing across team members for equal participation within the 10-minute time limit.
+
+**Course Alignment:** This rehearsal fulfilled our requirement to communicate technical information orally and in writing.
+
+---
+
 # Meeting 3: Project Selection & Architecture Finalization
 **Date:** September 8, 2026
 
