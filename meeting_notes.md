@@ -1,3 +1,20 @@
+# Meeting 3: Project Selection & Architecture Finalization
+**Date:** September 8, 2026
+
+**Primary Objective:** Officially commit to Project Smiley and outline the pitch deck structure.
+
+## Key Decisions:
+* Formally selected "Disloyalty Tracker" as our project, framing it as an employee engagement and computer misuse tracker.
+* Defined the dual mode technical architecture:
+  * **Smile Mode:** Employee dashboard with gamified leaderboard mechanics and options to establish an "illusion of choice."
+  * **Predatory Mode:** HR/Admin telemetry to log targeted keywords and unauthorized job search sites.
+* Established market differentiation against commercial tracking tools (Hubstaff, Teramind, Time Doctor) by emphasizing targeted disloyalty monitoring over generic idle time tracking.
+* Confirmed stack constraints: Frontend (HTML/CSS), Backend (Python), and Database (SQLite).
+
+**Course Alignment:** This meeting completed our project selection phase, defining functional, non functional, and domain requirements for a complete software.
+
+---
+
 # Meeting 2: Software Specification & Ideation
 **Date:** September 3, 2026
 
