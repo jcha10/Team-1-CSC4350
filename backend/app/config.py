@@ -31,6 +31,9 @@ CORS_ORIGINS = _list("CORS_ORIGINS", "")
 # demo accounts. Turn on explicitly for local dev / classroom demos.
 SEED_DEMO_DATA = _bool("SEED_DEMO_DATA", False)
 
+SIMULATOR_ENABLED = _bool("SIMULATOR_ENABLED", True)
+SIMULATOR_INTERVAL_SECONDS = float(os.environ.get("SIMULATOR_INTERVAL_SECONDS", "4"))
+
 SESSION_TTL_HOURS = float(os.environ.get("SESSION_TTL_HOURS", "12"))
 
 LOGIN_MAX_FAILURES = int(os.environ.get("LOGIN_MAX_FAILURES", "5"))
