@@ -110,20 +110,12 @@ export default function App() {
   }
 
  /**
-   * If the user is logged in, render the Header component with the user details and logout handler, along with the main content displaying a welcome message and user role. The ToastStack is also rendered to display any toast messages.
+   * If the user is logged in, render the Header and Smile Mode (the live leaderboard, stats and visibility settings), plus the ToastStack for toast messages.
    */
   return (
     <div className="min-h-screen bg-yellow-50">
       <Header user={user} onLogout={handleLogout} />
-      <main className="max-w-5xl mx-auto px-4 py-10">
-        <div className="bg-black text-yellow-400 rounded-2xl p-6 shadow-lg">
-          <p className="text-sm opacity-80">Welcome,</p>
-          <p className="text-2xl font-extrabold">{user.username} 😊</p>
-          <p className="text-sm opacity-80 mt-2">
-            Signed in as {user.role === "hr_admin" ? "HR Admin" : "Employee"}.
-          </p>
-        </div>
-      </main>
+      <SmileMode user={user} setUser={setUser} onToast={addToast} />
       <ToastStack toasts={toasts} />
     </div>
   );

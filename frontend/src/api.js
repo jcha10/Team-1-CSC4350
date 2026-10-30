@@ -11,6 +11,12 @@
  */
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
+function wsBase() {
+  if (API_BASE) return API_BASE.replace(/^http/, "ws");
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${window.location.host}`;
+}
+
 const TOKEN_KEY = "smiley_token";
 
 export const session = {
