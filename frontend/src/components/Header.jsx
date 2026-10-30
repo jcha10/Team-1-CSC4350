@@ -17,9 +17,7 @@ export default function Header({ user, onLogout }) {
         <span>Smiley</span>
       </div>
 
-      /**
-       * Display the signed-in user's username and role.
-       */
+      {/* Display the signed-in user's username and role. */}
       <div className="flex items-center gap-4 text-sm">
         <span className="text-black/70">
           {user.username} · {user.role === "hr_admin" ? "HR Admin" : "Employee"}
