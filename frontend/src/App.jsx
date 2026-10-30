@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { api, session, UNAUTHORIZED_EVENT } from "./api";
 import Login from "./components/Login";
 import Header from "./components/Header";
+import SmileMode from "./components/SmileMode";
 import ToastStack from "./components/Toast";
 
 /**
@@ -20,6 +21,7 @@ export default function App() {
   /**
    * Add a toast message to the stack. The toast will automatically disappear after 3.5 seconds.
    */
+
   const addToast = useCallback((message, type = "info") => {
     const id = Math.random().toString(36).slice(2);
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -28,9 +30,10 @@ export default function App() {
     }, 3500);
   }, []);
 
-/**
- * On mount, check if the user is already logged in (via a session token) and fetch their details. If not logged in, we can skip the API call and just set loading to false. We also check if the app is in demo mode.
- */
+  /**
+   * On mount, check if the user is already logged in (via a session token) and fetch their details. If not logged in, we can skip the API call and just set loading to false. We also check if the app is in demo mode.
+   */
+
   useEffect(() => {
     api
       .health()
@@ -41,7 +44,7 @@ export default function App() {
       setLoading(false);
       return;
     }
-    /**
+     /**
      * If a session token exists, we attempt to fetch the user's details. If the token is invalid or expired, we clear the session and set loading to false.
      */
     api
@@ -69,10 +72,10 @@ export default function App() {
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
   }, [addToast]);
 
+  /**
+   * Handle user login by setting the session token and updating the user state. This function is called when the Login component successfully authenticates a user.
+   */
 
-/**
- * Handle user login by setting the session token and updating the user state. This function is called when the Login component successfully authenticates a user.
- */
   function handleLogin(token, loggedInUser) {
     session.set(token);
     setUser(loggedInUser);
@@ -87,7 +90,7 @@ export default function App() {
     setUser(null);
   }
 
-  /**
+    /**
    * Render the appropriate UI based on the current state. If loading, show a loading indicator. If not logged in, show the Login component. If logged in, show the Header and main content with user details.
    */
   if (loading) {
@@ -106,7 +109,7 @@ export default function App() {
     );
   }
 
-  /**
+ /**
    * If the user is logged in, render the Header component with the user details and logout handler, along with the main content displaying a welcome message and user role. The ToastStack is also rendered to display any toast messages.
    */
   return (
