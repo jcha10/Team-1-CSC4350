@@ -55,6 +55,10 @@ export const api = {
   logout: () => request("/api/auth/logout", { method: "POST" }),
 
   getMe: () => request("/api/me"),
+  updateVisibility: (metric, is_public) =>
+    request("/api/me/visibility", { method: "PATCH", body: JSON.stringify({ metric, is_public }) }),
+
+  getLeaderboard: (metric) => request(`/api/leaderboard/${metric}`),
 
   // true/false rather than throwing: a 403 here is an expected answer
   // ("you're not hr_admin"), not an error.
@@ -66,4 +70,13 @@ export const api = {
       return false;
     }
   },
+
+  leaderboardSocketUrl: () => `${wsBase()}/ws/leaderboard?token=${encodeURIComponent(session.get() ?? "")}`,
 };
+
+export const METRICS = [
+  { key: "points", label: "Points" },
+  { key: "apm", label: "APM" },
+  { key: "total_clicks", label: "Total Clicks" },
+  { key: "active_screen_time", label: "Active Screen Time" },
+];
