@@ -12,9 +12,33 @@ class LoginResponse(BaseModel):
     user: "UserOut"
 
 
+class VisibilityOut(BaseModel):
+    metric: str
+    is_public: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class UserOut(BaseModel):
     id: int
     username: str
     role: str
+    points: int
+    apm: float
+    total_clicks: int
+    active_screen_time: float
+    visibilities: list[VisibilityOut]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class VisibilityUpdateRequest(BaseModel):
+    metric: str
+    is_public: bool
+
+
+class LeaderboardEntry(BaseModel):
+    username: str
+    value: float
+    is_you: bool = False
+    
