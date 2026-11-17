@@ -65,6 +65,16 @@ export const api = {
     request("/api/me/visibility", { method: "PATCH", body: JSON.stringify({ metric, is_public }) }),
 
   getLeaderboard: (metric) => request(`/api/leaderboard/${metric}`),
+  sendKudos: (username) => request(`/api/kudos/${encodeURIComponent(username)}`, { method: "POST" }),
+
+  getTasks: () => request("/api/tasks"),
+  createTask: (title) => request("/api/tasks", { method: "POST", body: JSON.stringify({ title }) }),
+  updateTask: (id, is_done) => request(`/api/tasks/${id}`, { method: "PATCH", body: JSON.stringify({ is_done }) }),
+  deleteTask: (id) => request(`/api/tasks/${id}`, { method: "DELETE" }),
+
+  getAnnouncements: () => request("/api/announcements"),
+  createAnnouncement: (title, body) =>
+    request("/api/announcements", { method: "POST", body: JSON.stringify({ title, body }) }),
 
   // true/false rather than throwing: a 403 here is an expected answer
   // ("you're not hr_admin"), not an error.
@@ -77,7 +87,15 @@ export const api = {
     }
   },
 
+  getHrTelemetry: (limit = 50) => request(`/api/hr/telemetry?limit=${limit}`),
+  getEmployeeActivity: (username, { limit = 200, flagged = false } = {}) =>
+    request(`/api/hr/employees/${encodeURIComponent(username)}/activity?limit=${limit}&flagged=${flagged}`),
+  getDisloyaltyStats: () => request("/api/hr/disloyalty-stats"),
+  getHrEmployees: () => request("/api/hr/employees"),
+  getIntegrationsStatus: () => request("/api/hr/integrations/status"),
+
   leaderboardSocketUrl: () => `${wsBase()}/ws/leaderboard?token=${encodeURIComponent(session.get() ?? "")}`,
+  hrFeedSocketUrl: () => `${wsBase()}/ws/hr/feed?token=${encodeURIComponent(session.get() ?? "")}`,
 };
 
 export const METRICS = [
@@ -85,4 +103,6 @@ export const METRICS = [
   { key: "apm", label: "APM" },
   { key: "total_clicks", label: "Total Clicks" },
   { key: "active_screen_time", label: "Active Screen Time" },
+  { key: "tasks_completed", label: "Tasks Completed" },
+  { key: "kudos_given", label: "Kudos Given" },
 ];
