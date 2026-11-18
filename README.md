@@ -101,17 +101,22 @@ simulator.
 
 ## Local development
 
+You need **Python 3.10 or newer** (CI uses 3.11) and **Node 18 or newer**
+(CI uses 22). Check with `python3 --version` and `node --version`. If
+`python3` is older (some Macs have 3.9), use `python3.11` instead of
+`python3` below.
+
 ```bash
 # Backend (terminal 1)
 cd backend
-python3.11 -m venv .venv
+python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 cp .env.example .env            # turns on demo accounts for local use
 .venv/bin/uvicorn app.main:app --reload --port 8000
 
 # Frontend (terminal 2)
 cd frontend
-npm install
+npm ci
 npm run dev                     # http://localhost:5173
 ```
 
@@ -120,9 +125,11 @@ same-origin, exactly like production. No CORS setup is needed.
 
 ## Tests & CI
 
+From the top of the repo, after the setup above:
+
 ```bash
-cd backend && .venv/bin/python -m pytest -q     # 37 tests
-cd frontend && npm run build
+cd backend && .venv/bin/python -m pytest -q      # 74 backend tests
+cd ../frontend && npm test && npm run build      # 14 frontend tests, then the production build
 ```
 
 The suite covers login, logout, session expiry, lockout, and hashed-only
