@@ -104,7 +104,7 @@ simulator.
 ```bash
 # Backend (terminal 1)
 cd backend
-python3 -m venv .venv
+python3.11 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 cp .env.example .env            # turns on demo accounts for local use
 .venv/bin/uvicorn app.main:app --reload --port 8000
