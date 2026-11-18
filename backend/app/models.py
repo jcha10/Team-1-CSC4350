@@ -1,23 +1,35 @@
 """
 Database schema (SQLAlchemy ORM models -> SQLite tables).
 
-- users:               identity, role, the live telemetry numbers (points,
-                        apm, clicks, active time) and the disloyalty flag +
-                        counter.
+Four tables:
+
+- users:               identity, role, the live telemetry numbers HR cares
+                        about (points/apm/clicks/active time, plus the
+                        disloyalty flag + counter), and the employee-facing
+                        engagement hooks (streak, kudos received).
 - metric_visibilities:  ITEMIZED per-metric opt-in/opt-out for the *public*
                         peer leaderboard only. One row per (user, metric).
                         This table has zero effect on telemetry collection -
-                        the simulator never reads it.
+                        the simulator and HR routes never read it.
 - activity_logs:        the raw simulated browsing/activity events, plus
                         whether they tripped a restricted-keyword match.
-- auth_sessions:        one row per login. Only a hash of the token is
-                        stored.
+- kudos:                one row per peer "cheer" sent on the leaderboard -
+                        a purely social, opt-in feature with no bearing on
+                        anything HR sees.
+- tasks:                a private per-user to-do list. Only ever queried
+                        filtered by owner - nobody, including hr_admin,
+                        has a route that reads another user's tasks.
+- announcements:        company-wide posts. hr_admin can write, every
+                        authenticated user (any role) can read - the one
+                        table in this schema that's intentionally visible
+                        both ways, unlike the monitoring tables above.
 """
 import datetime
 
 from sqlalchemy import (
     Boolean,
     Column,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -31,12 +43,16 @@ from .database import Base
 
 # The set of metrics an employee can individually show/hide on the public
 # leaderboard. Kept in one place so backend validation and seed data agree.
-# All four are simulated (driven by telemetry.py).
+# The first four are simulated (driven by telemetry.py); the last two are
+# real counts of actual actions taken in the app (completing a to-do,
+# sending a kudos) - both kinds go through the identical visibility system.
 LEADERBOARD_METRICS = [
     "points",
     "apm",
     "total_clicks",
     "active_screen_time",
+    "tasks_completed",
+    "kudos_given",
 ]
 
 
@@ -62,6 +78,15 @@ class User(Base):
     # hr_admin-only routes. ---
     is_disloyal = Column(Boolean, default=False, nullable=False)
     disloyal_violation_count = Column(Integer, default=0, nullable=False)
+
+    # --- Employee-facing engagement hooks. Purely cosmetic/social - HR
+    # routes never read these, and they never affect is_disloyal. ---
+    current_streak = Column(Integer, default=0, nullable=False)  # consecutive days visited
+    longest_streak = Column(Integer, default=0, nullable=False)
+    last_active_date = Column(Date, nullable=True)  # last calendar day touch_daily_streak() ran for
+    kudos_received = Column(Integer, default=0, nullable=False)  # denormalized count, see Kudos table
+    kudos_given = Column(Integer, default=0, nullable=False)  # denormalized count, see Kudos table
+    tasks_completed = Column(Integer, default=0, nullable=False)  # denormalized count, see Task table
 
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
@@ -110,6 +135,53 @@ class ActivityLog(Base):
     is_flagged = Column(Boolean, default=False, nullable=False)
 
     user = relationship("User", back_populates="activity_logs")
+
+
+class Kudos(Base):
+    """
+    One row per peer "cheer" sent from the leaderboard. Capped at one per
+    (from_user, to_user) per calendar day at the route level (main.py) -
+    the table itself has no unique constraint enforcing that so the app
+    can decide the exact dedup window in one place.
+    """
+    __tablename__ = "kudos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    from_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    to_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+
+
+class Task(Base):
+    """
+    A private to-do item. Every route that touches this table filters by
+    `user_id == <the authenticated caller>` - there is no route, including
+    any hr_admin one, that lists another user's tasks.
+    """
+    __tablename__ = "tasks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    is_done = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class Announcement(Base):
+    """
+    A company-wide post. Written only by hr_admin (enforced at the route
+    level), readable by any authenticated user regardless of role - the
+    deliberately public counterpart to the hidden monitoring tables above.
+    """
+    __tablename__ = "announcements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    title = Column(String, nullable=False)
+    body = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+
+    author = relationship("User")
 
 
 class AuthSession(Base):
