@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { api, session, UNAUTHORIZED_EVENT } from "./api";
 import Login from "./components/Login";
 import Header from "./components/Header";
 import SmileMode from "./components/SmileMode";
+import PredatoryMode from "./components/PredatoryMode";
 import ToastStack from "./components/Toast";
 
 /**
@@ -10,10 +12,16 @@ import ToastStack from "./components/Toast";
  *
  * `user` is the source of truth for identity/role, always populated from
  * a server response (login or /api/me) - never something the UI
- * constructs itself.
+ * constructs itself. `mode` is purely a client-side view switch; it does
+ * NOT grant access to anything by itself. Every Predatory Mode data
+ * fetch/WebSocket still goes through the backend's require_hr_admin
+ * check independently, so even if `mode` were somehow forced to
+ * "predatory" for a non-admin, the HR routes would still 403 and the
+ * dashboard would render empty/error states rather than leak data.
  */
 export default function App() {
   const [user, setUser] = useState(null);
+  const [mode, setMode] = useState("smile");
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
   const [demoMode, setDemoMode] = useState(false);
@@ -22,7 +30,7 @@ export default function App() {
    * Add a toast message to the stack. The toast will automatically disappear after 3.5 seconds.
    */
 
-  const addToast = useCallback((message, type = "info") => {
+const addToast = useCallback((message, type = "info") => {
     const id = Math.random().toString(36).slice(2);
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
@@ -61,11 +69,12 @@ export default function App() {
   /**
    * Listen for the UNAUTHORIZED_EVENT, which is dispatched when the server responds with a 401 status code. When this event is caught, we clear the session and set the user to null, effectively logging them out and prompting them to log in again.
    */
-  useEffect(() => {
+useEffect(() => {
     function onUnauthorized() {
       if (!session.get()) return;
       session.clear();
       setUser(null);
+      setMode("smile");
       addToast("Your session expired. Please sign in again.", "error");
     }
     window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
@@ -88,6 +97,7 @@ export default function App() {
     await api.logout().catch(() => {}); // revoke server-side; clear locally regardless
     session.clear();
     setUser(null);
+    setMode("smile");
   }
 
     /**
@@ -113,10 +123,33 @@ export default function App() {
    * If the user is logged in, render the Header and Smile Mode (the live leaderboard, stats and visibility settings), plus the ToastStack for toast messages.
    */
   return (
-    <div className="min-h-screen bg-yellow-50">
-      <Header user={user} onLogout={handleLogout} />
-      <SmileMode user={user} setUser={setUser} onToast={addToast} />
+    <div className={mode === "predatory" ? "min-h-screen bg-gray-950" : "min-h-screen bg-yellow-50"}>
+      <Header mode={mode} setMode={setMode} user={user} onLogout={handleLogout} onToast={addToast} />
+      <AnimatePresence mode="wait">
+        {mode === "predatory" ? (
+          <motion.div
+            key="predatory"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
+            <PredatoryMode onToast={addToast} onDenied={() => setMode("smile")} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="smile"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
+            <SmileMode user={user} setUser={setUser} onToast={addToast} />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <ToastStack toasts={toasts} />
     </div>
   );
 }
+
