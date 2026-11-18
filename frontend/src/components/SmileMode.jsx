@@ -6,6 +6,10 @@ import Leaderboard from "./Leaderboard";
 import VisibilitySettings from "./VisibilitySettings";
 import AnimatedNumber from "./AnimatedNumber";
 import Sparkline from "./Sparkline";
+import LevelBar from "./LevelBar";
+import Badges from "./Badges";
+import TaskList from "./TaskList";
+import Announcements from "./Announcements";
 
 const HISTORY_LENGTH = 20;
 
@@ -67,6 +71,19 @@ export default function SmileMode({ user, setUser, onToast }) {
 
   const metricLabel = METRICS.find((m) => m.key === metric)?.label || metric;
 
+  function handleBadgeUnlock(badge) {
+    onToast(`🏅 Achievement unlocked: ${badge.label} — ${badge.desc}`, "info");
+  }
+
+  async function handleKudos(username) {
+    try {
+      const res = await api.sendKudos(username);
+      onToast(`🙌 You cheered ${res.to_username}!`, "info");
+    } catch (err) {
+      onToast(err.message || "Could not send kudos", "error");
+    }
+  }
+
   return (
     <motion.main
       className="max-w-5xl mx-auto px-4 py-6 space-y-6"
@@ -90,8 +107,26 @@ export default function SmileMode({ user, setUser, onToast }) {
               decimals={1}
               history={history.active_screen_time}
             />
+            <div className="w-20">
+              <p className="text-xs uppercase tracking-wide opacity-70">Streak</p>
+              <p className="text-xl font-extrabold tabular-nums">
+                🔥 <AnimatedNumber value={user.current_streak} />
+              </p>
+              <p className="text-[10px] opacity-60">best: {user.longest_streak}</p>
+            </div>
           </div>
         </div>
+        <LevelBar points={user.points} />
+      </div>
+
+      <div className="bg-white border-4 border-black rounded-2xl p-4 shadow-lg">
+        <h2 className="text-sm font-extrabold text-black mb-3 uppercase tracking-wide">Achievements</h2>
+        <Badges user={user} onUnlock={handleBadgeUnlock} />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6 items-start">
+        <TaskList onToast={onToast} />
+        <Announcements user={user} onToast={onToast} />
       </div>
 
       <div className="flex gap-2 flex-wrap">
@@ -114,6 +149,7 @@ export default function SmileMode({ user, setUser, onToast }) {
           metricLabel={metricLabel}
           entries={entries}
           loading={loading}
+          onKudos={handleKudos}
         />
         <VisibilitySettings user={user} setUser={setUser} onToast={onToast} />
       </div>

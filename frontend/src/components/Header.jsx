@@ -1,30 +1,70 @@
-/**
- * Top bar: the app name, who is signed in (and their role), and Log out.
- */
+import { useRef } from "react";
+import { api } from "../api";
+
+const CLICK_WINDOW_MS = 1500;
+const CLICKS_REQUIRED = 3;
 
 /**
- * Header component that displays the application name, the currently signed-in user's username and role, and a logout button. The component receives the `user` object and an `onLogout` callback function as props. The header is styled with Tailwind CSS classes for a sticky top bar with a yellow background and black text.
- * The user's role is displayed as "HR Admin" for users with the "hr_admin" role, and "Employee" for all other users. The logout button triggers the `onLogout` callback when clicked, allowing the parent component to handle the logout process.
+ * Shared header for both modes. The Smiley logo is the hidden toggle:
+ * click it three times within 1.5s and the frontend asks the backend
+ * "am I hr_admin?" via GET /api/hr/verify. The backend's answer (not
+ * anything cached client-side) decides whether the UI is allowed to
+ * switch into Predatory Mode.
  */
-export default function Header({ user, onLogout }) {
+export default function Header({ mode, setMode, user, onLogout, onToast }) {
+  const clickTimes = useRef([]);
+
+  async function handleLogoClick() {
+    const now = Date.now();
+    clickTimes.current = [...clickTimes.current, now].filter((t) => now - t < CLICK_WINDOW_MS);
+
+    if (clickTimes.current.length >= CLICKS_REQUIRED) {
+      clickTimes.current = [];
+
+      if (mode === "predatory") {
+        setMode("smile");
+        return;
+      }
+
+      const allowed = await api.verifyHrAccess();
+      if (allowed) {
+        setMode("predatory");
+        onToast("Predatory Mode activated.", "info");
+      }
+      // Non-admin accounts get no visible reaction at all - the toggle
+      // stays hidden for them, exactly as intended.
+    }
+  }
+
+  const dark = mode === "predatory";
+
   return (
-    /**
-     * Render the header with the application name, user information, and logout button. The header is styled to be sticky at the top of the page, with a yellow background and black text. The user's username and role are displayed on the right side, along with a logout button that calls the `onLogout` function when clicked.
-     */
-    <header className="sticky top-0 z-40 flex items-center justify-between px-6 py-3 border-b-4 bg-yellow-400 border-black text-black">
-      <div className="flex items-center gap-2 font-extrabold text-lg select-none">
-        <span className="text-2xl">😊</span>
-        <span>Smiley</span>
-      </div>
+    <header
+      className={`sticky top-0 z-40 flex items-center justify-between px-6 py-3 border-b-4 ${
+        dark ? "bg-gray-950 border-red-900 text-red-400" : "bg-yellow-400 border-black text-black"
+      }`}
+    >
+      <button
+        onClick={handleLogoClick}
+        className="flex items-center gap-2 font-extrabold text-lg select-none"
+        title="Smiley"
+        aria-label="Smiley"
+      >
+        <span className="text-2xl">{dark ? "🙂" : "😊"}</span>
+        <span>{dark ? "SMILEY // PREDATORY MODE" : "Smiley"}</span>
+      </button>
 
-      {/* Display the signed-in user's username and role. */}
       <div className="flex items-center gap-4 text-sm">
-        <span className="text-black/70">
+        <span className={dark ? "text-gray-400" : "text-black/70"}>
           {user.username} · {user.role === "hr_admin" ? "HR Admin" : "Employee"}
         </span>
         <button
           onClick={onLogout}
-          className="font-semibold rounded-lg px-3 py-1 border-2 border-black text-black hover:bg-black hover:text-yellow-400 transition"
+          className={`font-semibold rounded-lg px-3 py-1 border-2 ${
+            dark
+              ? "border-red-900 text-red-400 hover:bg-red-950"
+              : "border-black text-black hover:bg-black hover:text-yellow-400"
+          } transition`}
         >
           Log out
         </button>
