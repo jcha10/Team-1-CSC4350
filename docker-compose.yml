@@ -1,0 +1,23 @@
+# One-command launch:  docker compose up --build   ->  http://localhost:8000
+#
+# SEED_DEMO_DATA defaults to true here so a fresh checkout is immediately
+# usable for a demo. For a real deployment run
+#   SEED_DEMO_DATA=false docker compose up -d
+# and create accounts with:
+#   docker compose exec smiley python -m app.cli create-user <name> --role hr_admin
+services:
+  smiley:
+    build: .
+    image: smiley:latest
+    ports:
+      - "8000:8000"
+    environment:
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-12}
+    volumes:
+      - smiley-data:/data
+    restart: unless-stopped
+
+volumes:
+  smiley-data:

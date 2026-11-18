@@ -4,7 +4,7 @@ import AnimatedNumber from "./AnimatedNumber";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
-export default function Leaderboard({ metric, metricLabel, entries, loading }) {
+export default function Leaderboard({ metric, metricLabel, entries, loading, onKudos }) {
   const myIndex = entries.findIndex((e) => e.is_you);
   const myEntry = myIndex === -1 ? null : entries[myIndex];
   const myRank = myIndex === -1 ? null : myIndex + 1;
@@ -87,9 +87,26 @@ export default function Leaderboard({ metric, metricLabel, entries, loading }) {
                   <span className="w-6 text-center">{MEDALS[i] || `#${i + 1}`}</span>
                   {e.username}
                   {e.is_you && <span className="text-xs uppercase tracking-wide text-black/60">(you)</span>}
+                  {e.kudos_received > 0 && (
+                    <span className="text-xs text-black/60" title={`${e.kudos_received} kudos received`}>
+                      🙌×{e.kudos_received}
+                    </span>
+                  )}
                 </span>
-                <span className="font-mono font-bold tabular-nums">
-                  <AnimatedNumber value={e.value} decimals={Number.isInteger(e.value) ? 0 : 1} />
+                <span className="flex items-center gap-2">
+                  <span className="font-mono font-bold tabular-nums">
+                    <AnimatedNumber value={e.value} decimals={Number.isInteger(e.value) ? 0 : 1} />
+                  </span>
+                  {!e.is_you && onKudos && (
+                    <button
+                      onClick={() => onKudos(e.username)}
+                      title={`Cheer ${e.username}`}
+                      aria-label={`Send kudos to ${e.username}`}
+                      className="text-sm rounded-full border-2 border-black bg-white hover:bg-yellow-200 active:scale-90 transition px-1.5 py-0.5"
+                    >
+                      🙌
+                    </button>
+                  )}
                 </span>
               </motion.li>
             ))}
