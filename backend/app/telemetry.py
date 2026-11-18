@@ -15,6 +15,7 @@ import re
 from sqlalchemy.orm import Session
 
 from . import models
+from .notifications import send_violation_alert
 
 # Restricted keywords/phrases HR wants flagged. Matching is case-insensitive
 # substring search over the simulated activity text.
@@ -159,5 +160,12 @@ async def run_simulator(session_factory, broadcast_hr, broadcast_leaderboard, in
                     "timestamp": event["timestamp"],
                 }
             )
+            if event["is_flagged"]:
+                # Real outbound alert (or a graceful local-log fallback -
+                # see notifications.py). Never allowed to block or crash
+                # the simulator loop.
+                await send_violation_alert(
+                    event["username"], event["matched_keyword"], event["violation_count"], event["raw_text"]
+                )
 
         await broadcast_leaderboard({"type": "leaderboard_tick"})
